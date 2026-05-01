@@ -62,12 +62,13 @@ export default function App() {
           <div className="pt-2 sm:pt-4 lg:pt-8">
             <span className={EYE_BROW}>LogMile</span>
             <h1 className="mt-4 max-w-[11ch] text-[clamp(2.8rem,5vw,4.8rem)] font-semibold leading-[0.96] tracking-[-0.05em] text-ink">
-              Plan legal routes, not guesses scribbled beside the logbook.
+              Plan HOS-compliant routes with confidence.
             </h1>
             <p className={`${BODY_COPY} mt-5 max-w-[42rem]`}>
-              This MVP pairs a Django HOS engine with a React dispatch view. It
-              calculates a legal trip schedule, places operational stops on a route
-              map, and draws daily ELD log sheets as SVG.
+              Enter the driver’s current location, pickup, drop-off, cycle hours, 
+              and start time. The planner calculates a legal trip schedule, adds 
+              required break/rest stops, shows the route on the map, and generates 
+              daily ELD log sheets.
             </p>
           </div>
 
