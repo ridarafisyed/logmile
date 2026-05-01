@@ -1,0 +1,2 @@
+class MapServiceError(Exception):
+    pass
