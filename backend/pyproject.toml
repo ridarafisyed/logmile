@@ -1,0 +1,40 @@
+[project]
+name = "logmile-backend"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+readme = "README.md"
+requires-python = "^3.13.5"
+dependencies = [
+    "django (>=6.0.4,<7.0.0)",
+    "djangorestframework (>=3.17.1,<4.0.0)",
+    "django-cors-headers (>=4.9.0,<5.0.0)",
+    "requests (>=2.33.1,<3.0.0)",
+    "python-dotenv (>=1.2.2,<2.0.0)",
+    "fpdf2 (>=2.8.7,<3.0.0)",
+    "gunicorn (>=25.3.0,<26.0.0)",
+    "whitenoise (>=6.12.0,<7.0.0)",
+    "reportlab (>=4.4.10,<5.0.0)",
+    "drf-spectacular (>=0.29.0,<0.30.0)",
+    "redis (>=6.4.0,<7.0.0)",
+    "psycopg[binary] (>=3.2.10,<4.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^9.0.3"
+pytest-django = "^4.12.0"
+black = "^26.3.1"
+isort = "^8.0.1"
+flake8 = "^7.3.0"
+ruff = "^0.15.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["trips/tests"]
