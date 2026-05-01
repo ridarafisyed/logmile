@@ -73,7 +73,7 @@ def cache_config() -> dict[str, dict[str, str]]:
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key")
 DEBUG = env_bool("DJANGO_DEBUG", env_bool("DEBUG", True))
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1", "logmile.onrender.com"])
 
 
 INSTALLED_APPS = [
