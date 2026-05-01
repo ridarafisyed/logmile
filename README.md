@@ -48,7 +48,7 @@ ALLOWED_HOSTS=localhost,127.0.0.1
 CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 CSRF_TRUSTED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 OPENROUTESERVICE_API_KEY=replace_me
-DATABASE_URL=postgresql://postgres:postgres@postgres:5432/logmile
+SQLITE_PATH=db.sqlite3
 REDIS_URL=redis://redis:6379/1
 VITE_DEV_API_PROXY_TARGET=http://localhost:8000
 ```
@@ -81,9 +81,9 @@ The Vite dev server proxies `/api` to the backend target defined by `VITE_DEV_AP
 docker compose up --build
 ```
 
-Docker Compose now runs a production-oriented stack:
-- `postgres` for relational data
+Docker Compose now runs a lean MVP stack:
 - `redis` for shared caching and throttle storage
+- `backend` with a local SQLite database file for Django migrations and built-in tables
 - `backend` under Gunicorn
 - `frontend` as built static assets served by Nginx on `http://localhost:5173`
 - backend is still reachable directly on `http://localhost:8000`
@@ -117,6 +117,7 @@ Example request:
 - `trips/types.py` and `trips/utils.py` hold shared response shapes, request dataclasses, and numeric helpers used across the backend.
 - Route geocoding and directions are cached through Django’s cache layer. With `REDIS_URL` set, those cache entries are shared across instances.
 - The trip planning endpoint is rate limited with burst and sustained throttles to protect the ORS dependency.
+- Postgres was removed from the default setup because the MVP does not persist domain data. Django uses SQLite locally for its built-in tables.
 
 ## Frontend Notes
 

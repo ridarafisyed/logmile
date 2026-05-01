@@ -1,6 +1,10 @@
 #!/bin/sh
 set -eu
 
+if [ -n "${SQLITE_PATH:-}" ]; then
+  mkdir -p "$(dirname "${SQLITE_PATH}")"
+fi
+
 poetry run python manage.py migrate --noinput
 
 exec poetry run gunicorn \

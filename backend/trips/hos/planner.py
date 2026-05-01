@@ -21,6 +21,7 @@ from .helpers import (
     has_remaining_driving,
     hours_to_timedelta,
     midnight_for,
+    next_midnight_after,
     normalize_planning_start,
     resolve_cycle_rule,
     serialize_stop_events,
@@ -74,6 +75,7 @@ def plan_hos_schedule(
     duty_window_used = 0.0
     driving_in_shift = 0.0
     driving_since_break = 0.0
+    break_counter_reset_at = planning_start_at
     shift_has_progress = False
     timeline_segments: list[TimelineSegment] = []
     stop_events: list[StopEvent] = []
@@ -113,7 +115,7 @@ def plan_hos_schedule(
         return response
 
     def add_rest_reset() -> bool:
-        nonlocal current_time, duty_window_used, driving_in_shift, driving_since_break, shift_has_progress
+        nonlocal current_time, duty_window_used, driving_in_shift, driving_since_break, break_counter_reset_at, shift_has_progress
 
         if not shift_has_progress:
             return False
@@ -141,9 +143,23 @@ def plan_hos_schedule(
         )
 
         current_time = rest_end
+        if midnight_for(rest_end) == midnight_for(rest_start):
+            next_log_day_start = next_midnight_after(rest_end)
+            timeline_segments.append(
+                create_timeline_segment(
+                    status="off_duty",
+                    start_at=rest_end,
+                    end_at=next_log_day_start,
+                    location="Rest location",
+                    note="Off duty after reset before next log day",
+                )
+            )
+            current_time = next_log_day_start
+
         duty_window_used = 0.0
         driving_in_shift = 0.0
         driving_since_break = 0.0
+        break_counter_reset_at = current_time
         shift_has_progress = False
         return True
 
@@ -266,6 +282,7 @@ def plan_hos_schedule(
             remaining_cycle_hours -= FUEL_STOP_DURATION_HOURS
             miles_since_fuel = 0.0
             driving_since_break = 0.0
+            break_counter_reset_at = current_time
             shift_has_progress = True
             continue
 
@@ -281,13 +298,18 @@ def plan_hos_schedule(
 
             break_start = current_time
             break_end = break_start + hours_to_timedelta(BREAK_DURATION_HOURS)
+            break_note = "30-minute break after 8 cumulative driving hours"
+            if midnight_for(break_start) > midnight_for(break_counter_reset_at):
+                break_note = (
+                    "30-minute break after 8 cumulative driving hours carried over from the prior log day"
+                )
             timeline_segments.append(
                 create_timeline_segment(
                     status="off_duty",
                     start_at=break_start,
                     end_at=break_end,
                     location="Break stop",
-                    note="30-minute break",
+                    note=break_note,
                 )
             )
             stop_events.append(
@@ -297,13 +319,14 @@ def plan_hos_schedule(
                     start_at=break_start,
                     duration_hours=BREAK_DURATION_HOURS,
                     miles_from_route_start=miles_from_route_start,
-                    note="30-minute break",
+                    note=break_note,
                 )
             )
 
             current_time = break_end
             duty_window_used += BREAK_DURATION_HOURS
             driving_since_break = 0.0
+            break_counter_reset_at = current_time
             shift_has_progress = True
             continue
 

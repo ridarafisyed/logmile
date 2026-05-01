@@ -268,3 +268,49 @@ def test_daily_logs_do_not_wrap_segments_backward_across_midnight():
     assert day_two_segments[0]["status"] == "driving"
     assert day_two_segments[0]["start"] == 0
     assert day_two_segments[0]["end"] == 0.88
+
+
+def test_same_day_reset_waits_until_next_log_day_before_resuming_work():
+    plan = plan_hos_schedule(
+        distance_miles=961.03,
+        duration_hours=16.43,
+        current_cycle_used=20,
+        current_location="Chicago, IL, USA",
+        pickup_location="St. Louis County, MO, USA",
+        dropoff_location="Dallas, TX, USA",
+        trip_start_at=datetime(2026, 5, 1, 19, 8, tzinfo=UTC),
+        route_legs=[
+            {
+                "kind": "to_pickup",
+                "start": "Chicago, IL, USA",
+                "end": "St. Louis County, MO, USA",
+                "distance_miles": 284.46,
+                "duration_hours": 5.37,
+            },
+            {
+                "kind": "to_dropoff",
+                "start": "St. Louis County, MO, USA",
+                "end": "Dallas, TX, USA",
+                "distance_miles": 676.57,
+                "duration_hours": 11.06,
+            },
+        ],
+    )
+
+    day_two_segments = plan["daily_logs"][1]["segments"]
+    day_three_segments = plan["daily_logs"][2]["segments"]
+
+    assert plan["is_legal"] is True
+    assert plan["summary"]["total_days"] == 3
+    assert plan["summary"]["estimated_arrival_at"] == "2026-05-03T06:25:48+00:00"
+    assert day_two_segments[-1]["status"] == "off_duty"
+    assert day_two_segments[-1]["start"] == 17.63
+    assert day_two_segments[-1]["end"] == 24
+    assert "next log day" in day_two_segments[-1]["note"].lower()
+    assert day_three_segments[0]["status"] == "driving"
+    assert day_three_segments[0]["start"] == 0
+    assert day_three_segments[0]["end"] == 5.43
+    assert any(
+        "carried over from the prior log day" in remark["note"].lower()
+        for remark in plan["daily_logs"][1]["remarks"]
+    )

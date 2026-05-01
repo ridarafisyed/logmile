@@ -129,6 +129,10 @@ def midnight_for(date_time: datetime) -> datetime:
     return date_time.replace(hour=0, minute=0, second=0, microsecond=0)
 
 
+def next_midnight_after(date_time: datetime) -> datetime:
+    return midnight_for(date_time) + timedelta(days=1)
+
+
 def decimal_hour_for_datetime(date_time: datetime) -> float:
     return round_hour(
         date_time.hour

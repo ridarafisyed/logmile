@@ -25,13 +25,13 @@ export default function EldLogSheet({ log }: EldLogSheetProps) {
         aside={
           <div className="flex flex-wrap gap-2 text-xs font-medium text-slate-600">
             <span className="rounded-full border border-ink/10 bg-white/70 px-3 py-1">
-              Driving {formatDurationHours(log.totals.driving)}
+              Driving total {formatDurationHours(log.totals.driving)}
             </span>
             <span className="rounded-full border border-ink/10 bg-white/70 px-3 py-1">
-              On Duty {formatDurationHours(log.totals.on_duty)}
+              On duty total {formatDurationHours(log.totals.on_duty)}
             </span>
             <span className="rounded-full border border-ink/10 bg-white/70 px-3 py-1">
-              Off Duty {formatDurationHours(log.totals.off_duty)}
+              Off duty total {formatDurationHours(log.totals.off_duty)}
             </span>
           </div>
         }

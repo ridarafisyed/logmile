@@ -4,12 +4,12 @@ import { createLocationFieldValue } from "../utils/location";
 
 export function createDefaultTripFormValues(): TripFormValues {
   return {
-    current_location: createLocationFieldValue("Chicago, IL"),
-    pickup_location: createLocationFieldValue("St. Louis, MO"),
-    dropoff_location: createLocationFieldValue("Dallas, TX"),
+    current_location: createLocationFieldValue(""),
+    pickup_location: createLocationFieldValue(""),
+    dropoff_location: createLocationFieldValue(""),
     trip_start_mode: "now",
     scheduled_trip_start_local: toDateTimeLocalValue(new Date()),
-    current_cycle_used: "20",
+    current_cycle_used: "",
     cycle_rule: "70_8",
   };
 }

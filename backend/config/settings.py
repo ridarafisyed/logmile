@@ -1,6 +1,5 @@
 from pathlib import Path
 import os
-from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 
@@ -33,38 +32,22 @@ def env_int(name: str, default: int) -> int:
     return int(value)
 
 
-def database_config() -> dict[str, str | int | Path]:
-    database_url = os.getenv("DATABASE_URL")
-    if database_url:
-        parsed = urlparse(database_url)
-        if parsed.scheme in {"postgres", "postgresql"}:
-            return {
-                "ENGINE": "django.db.backends.postgresql",
-                "NAME": parsed.path.lstrip("/"),
-                "USER": parsed.username or "",
-                "PASSWORD": parsed.password or "",
-                "HOST": parsed.hostname or "",
-                "PORT": parsed.port or 5432,
-                "CONN_MAX_AGE": env_int("DJANGO_DB_CONN_MAX_AGE", 60),
-                "CONN_HEALTH_CHECKS": True,
-            }
+def sqlite_path_config() -> Path:
+    sqlite_path = os.getenv("SQLITE_PATH")
+    if not sqlite_path:
+        return BASE_DIR / "db.sqlite3"
 
-    postgres_db = os.getenv("POSTGRES_DB")
-    if postgres_db:
-        return {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": postgres_db,
-            "USER": os.getenv("POSTGRES_USER", "postgres"),
-            "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
-            "HOST": os.getenv("POSTGRES_HOST", "postgres"),
-            "PORT": env_int("POSTGRES_PORT", 5432),
-            "CONN_MAX_AGE": env_int("DJANGO_DB_CONN_MAX_AGE", 60),
-            "CONN_HEALTH_CHECKS": True,
-        }
+    configured_path = Path(sqlite_path)
+    if configured_path.is_absolute():
+        return configured_path
 
+    return BASE_DIR / configured_path
+
+
+def database_config() -> dict[str, str | Path]:
     return {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": sqlite_path_config(),
     }
 
 
