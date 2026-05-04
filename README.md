@@ -49,9 +49,21 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 CSRF_TRUSTED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 OPENROUTESERVICE_API_KEY=replace_me
 SQLITE_PATH=db.sqlite3
-REDIS_URL=redis://redis:6379/1
 VITE_DEV_API_PROXY_TARGET=http://localhost:8000
 ```
+
+Optional variables:
+
+```env
+DJANGO_CACHE_DEFAULT_TIMEOUT=300
+MAPS_CACHE_TTL_SECONDS=86400
+LOCATION_SEARCH_RATE=180/min
+TRIP_PLAN_BURST_RATE=12/min
+TRIP_PLAN_SUSTAINED_RATE=1000/day
+```
+
+Notes:
+- Caching and DRF throttling use Django's local-memory cache. No external cache service is required.
 
 ## Local Development
 
@@ -82,7 +94,6 @@ docker compose up --build
 ```
 
 Docker Compose now runs a lean MVP stack:
-- `redis` for shared caching and throttle storage
 - `backend` with a local SQLite database file for Django migrations and built-in tables
 - `backend` under Gunicorn
 - `frontend` as built static assets served by Nginx on `http://localhost:5173`
@@ -115,7 +126,7 @@ Example request:
 - `trips/maps/` contains the OpenRouteService integration, geometry helpers, and stop-coordinate hydration logic.
 - `trips/hos/` contains the pure Python HOS scheduler split into constants, typed internal models, reusable helpers, and the planner loop.
 - `trips/types.py` and `trips/utils.py` hold shared response shapes, request dataclasses, and numeric helpers used across the backend.
-- Route geocoding and directions are cached through Django’s cache layer. With `REDIS_URL` set, those cache entries are shared across instances.
+- Route geocoding, directions, and API throttling use Django’s local-memory cache.
 - The trip planning endpoint is rate limited with burst and sustained throttles to protect the ORS dependency.
 - Postgres was removed from the default setup because the MVP does not persist domain data. Django uses SQLite locally for its built-in tables.
 

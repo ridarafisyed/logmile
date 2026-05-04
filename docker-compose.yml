@@ -1,16 +1,4 @@
 services:
-  redis:
-    image: redis:7-alpine
-    container_name: logmile_redis
-    command: redis-server --save "" --appendonly no --stop-writes-on-bgsave-error no --loglevel warning
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   backend:
     build:
       context: ./backend
@@ -23,13 +11,9 @@ services:
       CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
       OPENROUTESERVICE_API_KEY: ${OPENROUTESERVICE_API_KEY:-}
       SQLITE_PATH: ${SQLITE_PATH:-db.sqlite3}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/1}
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-3}
       GUNICORN_THREADS: ${GUNICORN_THREADS:-2}
       GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-60}
-    depends_on:
-      redis:
-        condition: service_healthy
     ports:
       - "8000:8000"
     healthcheck:
@@ -58,6 +42,3 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-
-volumes:
-  redis_data:

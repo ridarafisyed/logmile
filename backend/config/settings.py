@@ -51,17 +51,7 @@ def database_config() -> dict[str, str | Path]:
     }
 
 
-def cache_config() -> dict[str, dict[str, str]]:
-    redis_url = os.getenv("REDIS_URL")
-    if redis_url:
-        return {
-            "default": {
-                "BACKEND": "django.core.cache.backends.redis.RedisCache",
-                "LOCATION": redis_url,
-                "TIMEOUT": env_int("DJANGO_CACHE_DEFAULT_TIMEOUT", 300),
-            }
-        }
-
+def cache_config() -> dict[str, dict[str, str | int]]:
     return {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",

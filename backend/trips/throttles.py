@@ -1,4 +1,9 @@
+import logging
+
 from rest_framework.throttling import SimpleRateThrottle
+
+
+logger = logging.getLogger("trips.throttles")
 
 
 class BaseIPRateThrottle(SimpleRateThrottle):
@@ -7,6 +12,18 @@ class BaseIPRateThrottle(SimpleRateThrottle):
             "scope": self.scope,
             "ident": self.get_ident(request),
         }
+
+    def allow_request(self, request, view):
+        try:
+            return super().allow_request(request, view)
+        except Exception as error:
+            logger.warning(
+                "throttle_cache_unavailable scope=%s ident=%s error=%s",
+                self.scope,
+                self.get_ident(request),
+                error,
+            )
+            return True
 
 
 class TripPlanBurstRateThrottle(BaseIPRateThrottle):
