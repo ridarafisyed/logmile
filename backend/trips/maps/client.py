@@ -1,5 +1,6 @@
 import os
 from functools import lru_cache
+from json import JSONDecodeError
 
 import requests
 from django.conf import settings
@@ -114,7 +115,14 @@ def request_geocode_payload(
             f"Failed to fetch {request_name} from OpenRouteService."
         ) from error
 
-    return set_cached_value(cache_namespace, cache_payload, response.json())
+    try:
+        response_payload = response.json()
+    except JSONDecodeError as error:
+        raise MapServiceError(
+            f"OpenRouteService returned an unreadable response while fetching {request_name}."
+        ) from error
+
+    return set_cached_value(cache_namespace, cache_payload, response_payload)
 
 
 def geocode_location(location_text: str, api_key: str) -> WaypointDict:
@@ -205,8 +213,15 @@ def request_directions(
             "Failed to fetch route directions from OpenRouteService."
         ) from error
 
+    try:
+        directions_payload = response.json()
+    except JSONDecodeError as error:
+        raise MapServiceError(
+            "OpenRouteService returned an unreadable response while fetching route directions."
+        ) from error
+
     return set_cached_value(
         "directions",
         {"coordinates": coordinates},
-        response.json(),
+        directions_payload,
     )
