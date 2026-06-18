@@ -24,9 +24,10 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Authenticate to GCP
+      - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
@@ -36,17 +37,46 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker
-        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
-      - name: Build image
+      - name: Build Docker image
         run: |
           docker build \
             -t us-central1-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPO/$IMAGE_NAME:${{ github.sha }} \
             ./backend
 
-      - name: Push image
+      - name: Push Docker image
         run: |
-          docker push us-central1-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPO/$IMAGE_NAME:${{ github.sha }}
+          docker push \
+            us-central1-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPO/$IMAGE_NAME:${{ github.sha }}
+
+      - name: Create Cloud Run env file
+        run: |
+          cat > env.yaml <<EOF
+          ALLOWED_HOSTS: "${{ secrets.ALLOWED_HOSTS }}"
+          CORS_ALLOWED_ORIGINS: "${{ secrets.CORS_ALLOWED_ORIGINS }}"
+          CSRF_TRUSTED_ORIGINS: "${{ secrets.CSRF_TRUSTED_ORIGINS }}"
+          DATABASE_URL: "${{ secrets.DATABASE_URL }}"
+          DJANGO_CACHE_DEFAULT_TIMEOUT: "${{ secrets.DJANGO_CACHE_DEFAULT_TIMEOUT }}"
+          DJANGO_DB_CONN_MAX_AGE: "${{ secrets.DJANGO_DB_CONN_MAX_AGE }}"
+          DJANGO_DEBUG: "${{ secrets.DJANGO_DEBUG }}"
+          DJANGO_SECRET_KEY: "${{ secrets.DJANGO_SECRET_KEY }}"
+          GUNICORN_THREADS: "${{ secrets.GUNICORN_THREADS }}"
+          GUNICORN_TIMEOUT: "${{ secrets.GUNICORN_TIMEOUT }}"
+          GUNICORN_WORKERS: "${{ secrets.GUNICORN_WORKERS }}"
+          MAPS_CACHE_TTL_SECONDS: "${{ secrets.MAPS_CACHE_TTL_SECONDS }}"
+          OPENROUTESERVICE_API_KEY: "${{ secrets.OPENROUTESERVICE_API_KEY }}"
+          POSTGRES_DB: "${{ secrets.POSTGRES_DB }}"
+          POSTGRES_HOST: "${{ secrets.POSTGRES_HOST }}"
+          POSTGRES_PASSWORD: "${{ secrets.POSTGRES_PASSWORD }}"
+          POSTGRES_PORT: "${{ secrets.POSTGRES_PORT }}"
+          POSTGRES_USER: "${{ secrets.POSTGRES_USER }}"
+          REDIS_URL: "${{ secrets.REDIS_URL }}"
+          TRIP_PLAN_BURST_RATE: "${{ secrets.TRIP_PLAN_BURST_RATE }}"
+          TRIP_PLAN_SUSTAINED_RATE: "${{ secrets.TRIP_PLAN_SUSTAINED_RATE }}"
+          VITE_DEV_API_PROXY_TARGET: "${{ secrets.VITE_DEV_API_PROXY_TARGET }}"
+          EOF
 
       - name: Deploy to Cloud Run
         run: |
@@ -55,25 +85,11 @@ jobs:
             --region $REGION \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" \
-            --set-env-vars "CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}" \
-            --set-env-vars "CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}" \
-            --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
-            --set-env-vars "DJANGO_CACHE_DEFAULT_TIMEOUT=${{ secrets.DJANGO_CACHE_DEFAULT_TIMEOUT }}" \
-            --set-env-vars "DJANGO_DB_CONN_MAX_AGE=${{ secrets.DJANGO_DB_CONN_MAX_AGE }}" \
-            --set-env-vars "DJANGO_DEBUG=${{ secrets.DJANGO_DEBUG }}" \
-            --set-env-vars "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" \
-            --set-env-vars "GUNICORN_THREADS=${{ secrets.GUNICORN_THREADS }}" \
-            --set-env-vars "GUNICORN_TIMEOUT=${{ secrets.GUNICORN_TIMEOUT }}" \
-            --set-env-vars "GUNICORN_WORKERS=${{ secrets.GUNICORN_WORKERS }}" \
-            --set-env-vars "MAPS_CACHE_TTL_SECONDS=${{ secrets.MAPS_CACHE_TTL_SECONDS }}" \
-            --set-env-vars "OPENROUTESERVICE_API_KEY=${{ secrets.OPENROUTESERVICE_API_KEY }}" \
-            --set-env-vars "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" \
-            --set-env-vars "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" \
-            --set-env-vars "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" \
-            --set-env-vars "POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}" \
-            --set-env-vars "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" \
-            --set-env-vars "REDIS_URL=${{ secrets.REDIS_URL }}" \
-            --set-env-vars "TRIP_PLAN_BURST_RATE=${{ secrets.TRIP_PLAN_BURST_RATE }}" \
-            --set-env-vars "TRIP_PLAN_SUSTAINED_RATE=${{ secrets.TRIP_PLAN_SUSTAINED_RATE }}" \
-            --set-env-vars "VITE_DEV_API_PROXY_TARGET=${{ secrets.VITE_DEV_API_PROXY_TARGET }}"
+            --port 8080 \
+            --env-vars-file env.yaml
+
+      - name: Show Service URL
+        run: |
+          gcloud run services describe $SERVICE_NAME \
+            --region $REGION \
+            --format='value(status.url)'
